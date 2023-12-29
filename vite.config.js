@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: "/veeValidate-googleLogin-fireBase-create-vite-vue3/"
+  base: "/veeValidate-googleLogin-fireBase-create-vite-vue3/",
   plugins: [
     vue(),
   ],
