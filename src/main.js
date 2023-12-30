@@ -1,4 +1,5 @@
-import './assets/main.css'
+import './assets/main.css';
+import 'https://kit.fontawesome.com/96a7520586.js';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
