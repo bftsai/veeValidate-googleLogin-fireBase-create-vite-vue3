@@ -37,7 +37,7 @@
                 <error-message name="phoneNum" class="text-danger fw-bold"></error-message>
             </div>
             <div class="form-floating col-md-3 position-relative">
-                <button type="button" class="btn btn-outline-primary position-absolute launchCode" :class="{ 'disabled': isValidateNum()===false}" @click="firebaseConfirmationResult">驗證</button>
+                <button type="button" class="btn btn-outline-primary position-absolute launchCode launchCode-phone" :class="{ 'disabled': isValidateNum()===false}" @click="firebaseConfirmationResult">驗證</button>
                 <v-field name="validateNum" type="tel" class="form-control" id="validateNum" v-model="validateNum"></v-field>
                 <label for="validateNum" class="form-label">驗證碼</label>
                 <error-message name="validateNum" class="text-danger fw-bold"></error-message>
@@ -90,7 +90,7 @@ import { decodeCredential } from 'vue3-google-login'
 import { firebaseConfig } from "../assets/config.js";
 import { initializeApp } from "firebase/app";
 
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, sendSignInLinkToEmail } from "firebase/auth";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
 
 export default {
     data(){
@@ -104,6 +104,7 @@ export default {
             phoneNumValidate: false,
             validateNum: '',
             agree: false,
+            auth: {},
         }
     },
     components: {
@@ -140,7 +141,7 @@ export default {
         },
         isPhoneNum(value){
             if(!new RegExp('^[+]8869[0-9]{8}$').test(value)){
-                return '密碼首字需為大寫英文，英數混合8碼，例：A1234567'
+                return '手機號碼格式為：+886912345678'
             }else{
                 return true;
             }
@@ -209,8 +210,8 @@ export default {
             const user = result.user;
             console.log(user);
             this.phoneNumValidate=true;
-            const launchCode=document.querySelector('.launchCode');
-            launchCode.outerHTML=`<i class="fa-regular fa-circle-check fa-beat" style="color: #669c35;"></i>`;
+            const launchCodePhone=document.querySelector('.launchCode-phone');
+            launchCodePhone.outerHTML=`<i class="fa-regular fa-circle-check fa-beat position-absolute launchCode launchCode-phone" style="color: #669c35;right: 15px;top: calc(50% - 7.5px);"></i>`;
             // ...
             }).catch((error) => {
                 console.log(error);
@@ -241,6 +242,7 @@ export default {
             const auth = getAuth();
             sendSignInLinkToEmail(auth, this.email, actionCodeSettings)
             .then(() => {
+                console.log(email);
                 // The link was successfully sent. Inform the user.
                 // Save the email locally so you don't need to ask the user for it again
                 // if they open the link on the same device.
@@ -253,6 +255,47 @@ export default {
                 console.log(errorCode,'/',errorMessage);
                 // ...
             });
+        },
+        firebaseIsSignInWithEmailLink(){
+            console.log('click');
+            // Confirm the link is a sign-in with email link.
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            console.log(window.location.href);
+            console.log(isSignInWithEmailLink(auth, window.location.href));
+            if (isSignInWithEmailLink(auth, window.location.href)) {
+            // Additional state parameters can also be passed via URL.
+            // This can be used to continue the user's intended action before triggering
+            // the sign-in operation.
+            // Get the email if available. This should be available if the user completes
+            // the flow on the same device where they started it.
+            // let email = window.localStorage.getItem('emailForSignIn');
+            let email =this.email;
+            console.log(email);
+            if (!email) {
+                // User opened the link on a different device. To prevent session fixation
+                // attacks, ask the user to provide the associated email again. For example:
+                email = window.prompt('Please provide your email for confirmation');
+            }
+            // The client SDK will parse the code from the link for you.
+            signInWithEmailLink(auth, email, window.location.href)
+                .then((result) => {
+                    console.log(result);
+                // Clear email from storage.
+                window.localStorage.removeItem('emailForSignIn');
+                // You can access the new user via result.user
+                // Additional user info profile not available via:
+                // result.additionalUserInfo.profile == null
+                // You can check if the user is new or existing:
+                // result.additionalUserInfo.isNewUser
+                })
+                .catch((error) => {
+                    console.log(error);
+                // Some error occurred, you can inspect the code: error.code
+                // Common errors could be invalid email and invalid or expired OTPs.
+                });
+            }
+            console.log('fuc finished');
         },
     },
     created(){
