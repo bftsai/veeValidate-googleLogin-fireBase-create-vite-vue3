@@ -58,6 +58,11 @@
         <div>
             <GoogleLogin :callback="callback"/>
         </div>
+        <div>
+            <button class="medium_button btn_p08_user_loginType" id="lineLoginBtn" @click="openLineLogin">
+                <i class="fa-brands fa-line"></i> LINE
+            </button>
+        </div>
     </div>
 </template>
 
@@ -168,6 +173,7 @@ export default {
             }
         },
         callback(response){
+            console.log(response);
             const userData = decodeCredential(response.credential)
             console.log("Handle the userData", userData)
         },
