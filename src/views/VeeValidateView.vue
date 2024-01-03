@@ -59,6 +59,12 @@
             <GoogleLogin :callback="callback"/>
         </div>
         <div>
+            <button type="button" class="btn btn-outline-primary my-3" @click="firebaseGoogleAuthProvider">FireBase Google Login</button>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-primary my-3" @click="firebaseYahooLogin">FireBase Yahoo Login</button>
+        </div>
+        <div>
             <button class="medium_button btn_p08_user_loginType" id="lineLoginBtn" @click="openLineLogin">
                 <i class="fa-brands fa-line"></i> LINE
             </button>
@@ -95,7 +101,7 @@ import { decodeCredential } from 'vue3-google-login'
 import { firebaseConfig } from "../assets/config.js";
 import { initializeApp } from "firebase/app";
 
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, GoogleAuthProvider, signInWithPopup, OAuthProvider } from "firebase/auth";
 
 export default {
     data(){
@@ -246,7 +252,9 @@ export default {
 
             const app = initializeApp(firebaseConfig);
             const auth = getAuth();
-            sendSignInLinkToEmail(auth, this.email, actionCodeSettings)
+            auth.languageCode = 'zh-TW';
+            const email=this.email;
+            sendSignInLinkToEmail(auth, email, actionCodeSettings)
             .then(() => {
                 console.log(email);
                 // The link was successfully sent. Inform the user.
@@ -267,7 +275,8 @@ export default {
             // Confirm the link is a sign-in with email link.
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
-            console.log(window.location.href);
+            auth.languageCode = 'zh-TW';
+            console.log(auth);
             console.log(isSignInWithEmailLink(auth, window.location.href));
             if (isSignInWithEmailLink(auth, window.location.href)) {
             // Additional state parameters can also be passed via URL.
@@ -301,8 +310,60 @@ export default {
                 // Common errors could be invalid email and invalid or expired OTPs.
                 });
             }
-            console.log('fuc finished');
         },
+        firebaseGoogleAuthProvider(){
+            const provider = new GoogleAuthProvider();
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth();
+            auth.languageCode = 'zh-TW';
+            signInWithPopup(auth, provider)
+            .then((result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const token = credential.accessToken;
+                // The signed-in user info.
+                const user = result.user;
+                // IdP data available using getAdditionalUserInfo(result)
+                // ...
+                console.log(user);
+            }).catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                // The email of the user's account used.
+                const email = error.customData.email;
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                // ...
+                console.log(errorCode,errorMessage);
+            });
+        },
+        firebaseYahooLogin(){
+            const provider = new OAuthProvider('yahoo.com');
+            provider.setCustomParameters({
+            // Prompt user to re-authenticate to Yahoo.
+            prompt: 'login',
+            // Localize to French.
+            language: 'zh-TW'
+            }); 
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth();
+            signInWithPopup(auth, provider)
+            .then((result) => {
+                // IdP data available in result.additionalUserInfo.profile
+                // ...
+
+                // Yahoo OAuth access token and ID token can be retrieved by calling:
+                const credential = OAuthProvider.credentialFromResult(result);
+                const accessToken = credential.accessToken;
+                const idToken = credential.idToken;
+                console.log(credential,accessToken,idToken);
+            })
+            .catch((error) => {
+                // Handle error.
+                console.log(error);
+            });
+        }
     },
     created(){
         
